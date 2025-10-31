@@ -1,0 +1,114 @@
+
+// Smart Commute Companion - Enhanced Comfort & Safety Assistant
+// Simulated sensors, trend tracking, alerts, and suggestions
+const int TREND_WINDOW = 5; // Number of readings to track for trend
+float airHistory[TREND_WINDOW], noiseHistory[TREND_WINDOW];
+int indexHistory = 0;
+void setup() {
+Serial.begin(9600);
+randomSeed(analogRead(0));
+// Initialize history arrays with default mid-values
+for (int i = 0; i < TREND_WINDOW; i++) {
+airHistory[i] = 0.5;
+noiseHistory[i] = 0.5;
+}
+float simulateSensor(float minVal, float maxVal) {
+return random(minVal * 100, maxVal * 100) / 100.0;
+}
+}
+float normalize(float val, float minVal, float maxVal) {
+float n = (val - minVal) / (maxVal - minVal);
+if (n < 0) return 0;
+if (n > 1) return 1;
+return n;
+}
+float computeComfort(float nAir, float nTemp, float nHum, float nCrowd, float nNoise, float
+nVib) {
++ 0.15 * nVib));
+}
+return 100 * (1 - (0.25 * nAir + 0.18 * nTemp + 0.12 * nHum + 0.15 * nCrowd + 0.15 * nNoise
+String comfortStatus(float cci) {
+if (cci > 80) return "Excellent";
+if (cci > 60) return "Good";
+if (cci > 40) return "Moderate";
+if (cci > 20) return "Poor";
+return "Very Poor";
+}
+String healthAdvice(float airQuality, float noiseLevel) {
+String advice = "";
+if (airQuality > 0.7)
+advice += "Air quality poor! Consider masks or ventilation.\n";
+else advice += "Air quality good.\n";
+if (noiseLevel > 0.7)
+advice += "Noise level high! Use ear protection.\n";
+else advice += "Noise level acceptable.\n";
+return advice;
+}
+String routeSuggestion(float crowdDensity) {
+if (crowdDensity > 0.7) return "Crowded area. Consider alternate route or time.";
+else return "Crowd level low. Safe to proceed.";
+}
+float computeTrend(float history[]) {
+// Simple trend: difference between last and first reading
+return history[TREND_WINDOW - 1] - history[0];
+}
+void updateHistory(float history[], float newVal) {
+for (int i = 0; i < TREND_WINDOW - 1; i++) {
+history[i] = history[i + 1];
+}
+history[TREND_WINDOW - 1] = newVal;
+}
+void loop() {
+// Simulated sensor readings
+float gas = simulateSensor(350, 700);
+float temp = simulateSensor(18, 36);
+float hum = simulateSensor(30, 80);
+float crowdDist = simulateSensor(10, 200);
+float noise = simulateSensor(200, 800);
+float vib = simulateSensor(1.0, 2.0);
+// Normalize sensors
+float nAir = normalize(gas, 350, 700);
+float nTemp = normalize(temp, 18, 36);
+float nHum = normalize(hum, 30, 80);
+float nCrowd = 1 - normalize(crowdDist, 10, 200);
+float nNoise = normalize(noise, 200, 800);
+float nVib = normalize(vib, 1.0, 2.0);
+// Calculate Comfort Index
+float cci = computeComfort(nAir, nTemp, nHum, nCrowd, nNoise, nVib);
+String status = comfortStatus(cci);
+// Update trend histories
+updateHistory(airHistory, nAir);
+updateHistory(noiseHistory, nNoise);
+// Compute trends
+float airTrend = computeTrend(airHistory);
+float noiseTrend = computeTrend(noiseHistory);
+// Generate alerts based on trends and thresholds
+String alert = "";
+if (airTrend > 0.1) alert += "Alert: Air quality worsening!\n";
+if (noiseTrend > 0.1) alert += "Alert: Noise level rising!\n";
+if (alert == "") alert = "Environment stable.\n";
+// Suggestions
+String healthTips = healthAdvice(nAir, nNoise);
+String routeTips = routeSuggestion(nCrowd);
+// Output summary
+Serial.println("===== Smart Commute Companion =====");
+Serial.print("Comfort Index: "); Serial.print(cci, 1);
+Serial.print(" ("); Serial.print(status); Serial.println(")");
+Serial.print("Air Quality: "); Serial.println(gas, 1);
+Serial.print("Temperature: "); Serial.print(temp, 1); Serial.println(" C");
+Serial.print("Humidity: "); Serial.print(hum, 1); Serial.println(" %");
+Serial.print("Crowd Density: "); Serial.println(crowdDist, 1);
+Serial.print("Noise Level: "); Serial.println(noise, 1);
+Serial.print("Vibration: "); Serial.println(vib, 2);
+Serial.println();
+Serial.println("Alerts:");
+Serial.print(alert);
+Serial.println();
+Serial.println("Health Advice:");
+Serial.print(healthTips);
+Serial.println("Route Advice:");
+Serial.print(routeTips);
+Serial.println("===================================");
+Serial.println();
+delay(4000);
+}
